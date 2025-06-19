@@ -58,8 +58,6 @@ Ejecuta `control_fichas.sh help` para ver la lista completa de comandos.
 
 ```bash
 sudo apt install printer-driver-escpos
-
 lpadmin -p TP80C -E -v usb://HPRT/TP80C?serial=TP80C023450446 -m raw
-
 lpoptions -d TP80C
 ```

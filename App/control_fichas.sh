@@ -442,7 +442,7 @@ show_recent_payments() {
 # Respaldar datos - ACTUALIZADO
 backup_data() {
     local fecha=$(date +%Y%m%d_%H%M%S)
-    local backup_dir="/home/oemspot/backups"
+    local backup_dir="/home/oemspot/App/backups"
     local backup_file="$backup_dir/fichas_backup_v21_$fecha.tar.gz"
     
     echo -e "\n${BLUE}?? Creando respaldo V2.1...${NC}"

@@ -53,3 +53,13 @@ Algunos comandos comunes son:
 - `install-service` – instalar el servicio systemd para que el simulador se inicie automáticamente al arrancar
 
 Ejecuta `control_fichas.sh help` para ver la lista completa de comandos.
+
+## 5. Instalar Impresora TP80C USB
+
+```bash
+sudo apt install printer-driver-escpos
+
+lpadmin -p TP80C -E -v usb://HPRT/TP80C?serial=TP80C023450446 -m raw
+
+lpoptions -d TP80C
+```

@@ -42,8 +42,8 @@ RELAY_PIN = 17  # Pin GPIO para produccion (ficha real)
 RELAY_PIN_AUX = 27  # Pin GPIO auxiliar para uso manual
 
 # Claves de produccion MercadoPago
-PUBLIC_KEY = "APP_USR-d33672d1-2db8-48fc-b18a-37b3018bbcf5"
-ACCESS_TOKEN = "APP_USR-3033042189313629-082719-d74d77377d6eefe870db67befeca41c7-147894512"
+PUBLIC_KEY = "tu_public_key"
+ACCESS_TOKEN = "tu_access_token"
 
 LAVADERO_ID = "LAV-001"
 APP_PATH = "/home/oemspot/App"

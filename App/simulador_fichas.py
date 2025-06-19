@@ -21,7 +21,7 @@ import time
 import threading
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from gpiozero import OutputDevice
 from PIL import Image, ImageTk, ImageDraw, ImageFont
 import qrcode
@@ -42,8 +42,8 @@ RELAY_PIN = 17  # Pin GPIO para produccion (ficha real)
 RELAY_PIN_AUX = 27  # Pin GPIO auxiliar para uso manual
 
 # Claves de produccion MercadoPago
-PUBLIC_KEY = "tu_public_key"
-ACCESS_TOKEN = "tu_access_token"
+PUBLIC_KEY = "tu_key"
+ACCESS_TOKEN = "tu_token"
 
 LAVADERO_ID = "LAV-001"
 APP_PATH = "/home/oemspot/App"
@@ -51,6 +51,7 @@ LOG_PATH = "/home/oemspot/App/pagos_fichas"
 PRECIO_PATH = "/home/oemspot/App/precio_ficha.txt"
 LOGS_FILE = "/home/oemspot/App/simulador_fichas.log"
 QR_TEMP_PATH = "/home/oemspot/App/qr_ficha.png"
+PAGOS_PROCESADOS_PATH = "/home/oemspot/App/pagos_procesados.txt"
 
 # Configuracion especifica para contacto seco
 POLL_INTERVAL = 3  # Consultar cada 3 segundos
@@ -129,6 +130,25 @@ preference_id_actual = None
 ultimo_pago_info = {}
 
 # === FUNCIONES ESPECIFICAS PARA SISTEMA DE FICHAS ===
+
+def cargar_ids_procesados():
+    pagos = set()
+    try:
+        with open(PAGOS_PROCESADOS_PATH, "r") as f:
+            for linea in f:
+                partes = linea.strip().split()
+                if partes:
+                    pagos.add(partes[0])
+    except FileNotFoundError:
+        logging.info("[INFO] Archivo pagos_procesados.txt no existe. Se creará nuevo.")
+    return pagos
+
+def registrar_pago_procesado(payment_id, fecha):
+    try:
+        with open(PAGOS_PROCESADOS_PATH, "a") as f:
+            f.write(f"{payment_id} {fecha}\n")
+    except Exception as e:
+        logging.error(f"[ERROR] No se pudo registrar pago procesado: {e}")
 
 def leer_precio_ficha():
     """Lee el precio de la ficha desde archivo"""
@@ -420,74 +440,87 @@ def simular_insercion_ficha():
         ficha_activada.clear()
         return False
 
+inicio_sistema = datetime.now(timezone.utc)
+
 def bucle_monitoreo_fichas():
     """Bucle principal de monitoreo de pagos para fichas"""
     global ultimo_pago_info
-    
-    pagos_procesados = cargar_fichas_procesadas()
-    
+
+    pagos_procesados = cargar_ids_procesados()
+
     logging.info("[INFO] Iniciando monitoreo de pagos para fichas virtuales")
     logging.info("[INFO] Sistema listo para simular fichas fisicas")
     logging.info("[INFO] Modo: Solo conexiones de salida (sin puertos abiertos)")
-    
+
     while sistema_funcionando:
         try:
             logging.info("[INFO] Consultando pagos de fichas...")
             payment_id, monto = consultar_pagos_fichas()
-            
+
             if payment_id and payment_id not in pagos_procesados:
-                with lock:
-                    logging.info("=" * 70)
-                    logging.info(f"[PAGO] PAGO DE FICHA DETECTADO! ID: {payment_id}")
-                    logging.info(f"[PAGO] Monto: ${monto}")
-                    logging.info("=" * 70)
-                    
-                    # Obtener detalles completos del pago
-                    detalles = obtener_detalles_pago_completo(payment_id)
-                    
-                    if detalles:
-                        # Guardar informacion del ultimo pago para la interfaz
+                detalles = obtener_detalles_pago_completo(payment_id)
+
+                if detalles:
+                    # Validar que el pago no sea anterior al arranque del sistema
+                    fecha_pago_str = detalles.get("date_created")
+                    if fecha_pago_str:
+                        try:
+                            # Convertir fecha del pago a UTC
+                            fecha_pago = datetime.fromisoformat(fecha_pago_str.replace("Z", "+00:00"))
+                            if fecha_pago.tzinfo is not None:
+                                fecha_pago = fecha_pago.astimezone(timezone.utc).replace(tzinfo=None)
+                            # Convertir inicio_sistema a naive UTC
+                            inicio_sistema_utc = inicio_sistema.astimezone(timezone.utc).replace(tzinfo=None)
+                            
+                            if fecha_pago < inicio_sistema_utc:
+                                logging.info(f"[INFO] Ignorando pago anterior al arranque del sistema: {payment_id}")
+                                continue
+
+                        except Exception as e:
+                            logging.warning(f"[WARN] No se pudo analizar la fecha del pago: {e}")
+
+                    with lock:
+                        logging.info("=" * 70)
+                        logging.info(f"[PAGO] PAGO DE FICHA DETECTADO! ID: {payment_id}")
+                        logging.info(f"[PAGO] Monto: ${monto}")
+                        logging.info("=" * 70)
+
                         ultimo_pago_info = detalles
                         pago_recibido.set()
-                        
-                        # Guardar registro de la ficha
+
                         if guardar_ficha_virtual(detalles):
+                            registrar_pago_procesado(payment_id, detalles["date_created"])
                             pagos_procesados.add(payment_id)
-                            
-                            # Simular insercion de ficha en produccion
+
                             hilo_ficha = threading.Thread(
-                                target=simular_insercion_ficha, 
+                                target=simular_insercion_ficha,
                                 daemon=True
                             )
                             hilo_ficha.start()
-                            
-                            # Log informacion del pagador
+
                             payer = detalles.get("payer", {})
                             nombre_completo = f"{payer.get('first_name', '')} {payer.get('last_name', '')}".strip()
                             if nombre_completo:
                                 logging.info(f"[CLIENTE] Cliente: {nombre_completo}")
                             logging.info(f"[CLIENTE] Email: {payer.get('email', 'No disponible')}")
-                            
-                            # Log metodo de pago
+
                             payment_method = detalles.get("payment_method", {})
                             card = detalles.get("card", {})
                             if card:
                                 logging.info(f"[PAGO] Tarjeta: ****{card.get('last_four_digits', '')}")
                                 logging.info(f"[PAGO] Titular: {card.get('cardholder_name', 'No disponible')}")
-                            
+
                             logging.info(f"[OK] Pago {payment_id} procesado - Ficha simulada")
-                        
-                        time.sleep(2)  # Pausa despues de procesar
-                    else:
-                        logging.warning(f"[WARN] No se pudieron obtener detalles de {payment_id}")
-                        
+
+                        time.sleep(2)
+                else:
+                    logging.warning(f"[WARN] No se pudieron obtener detalles de {payment_id}")
             else:
                 logging.info("[INFO] Esperando pagos de fichas...")
-                
+
         except Exception as e:
             logging.error(f"[ERROR] Error en monitoreo: {e}")
-            
-        # Esperar antes de la siguiente consulta
+
         time.sleep(POLL_INTERVAL)
 
 def monitorear_precio_ficha():

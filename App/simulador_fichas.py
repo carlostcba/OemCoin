@@ -21,6 +21,19 @@ import time
 import threading
 import os
 import logging
+
+# Cargar variables de entorno desde un archivo .env si existe
+def _load_env(env_path=".env"):
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                os.environ.setdefault(k.strip(), v.strip())
+
+_load_env()
 from datetime import datetime
 from gpiozero import OutputDevice
 from PIL import Image, ImageTk, ImageDraw, ImageFont
@@ -41,21 +54,21 @@ else:
 RELAY_PIN = 17  # Pin GPIO para produccion (ficha real)
 RELAY_PIN_AUX = 27  # Pin GPIO auxiliar para uso manual
 
-# Claves de produccion MercadoPago
-PUBLIC_KEY = "APP_USR-d33672d1-2db8-48fc-b18a-37b3018bbcf5"
-ACCESS_TOKEN = "APP_USR-3033042189313629-082719-d74d77377d6eefe870db67befeca41c7-147894512"
+# Claves de produccion MercadoPago obtenidas del entorno
+PUBLIC_KEY = os.getenv("MP_PUBLIC_KEY")
+ACCESS_TOKEN = os.getenv("MP_ACCESS_TOKEN")
 
-LAVADERO_ID = "LAV-001"
-APP_PATH = "/home/oemspot/App"
-LOG_PATH = "/home/oemspot/App/pagos_fichas"
-PRECIO_PATH = "/home/oemspot/App/precio_ficha.txt"
-LOGS_FILE = "/home/oemspot/App/simulador_fichas.log"
-QR_TEMP_PATH = "/home/oemspot/App/qr_ficha.png"
+# Parametros configurables leidos desde variables de entorno
+LAVADERO_ID = os.getenv("LAVADERO_ID", "LAV-001")
+APP_PATH = os.getenv("APP_PATH", "/home/oemspot/App")
+LOG_PATH = os.getenv("LOG_PATH", "/home/oemspot/App/pagos_fichas")
+LOGS_FILE = os.getenv("LOGS_FILE", "/home/oemspot/App/simulador_fichas.log")
+QR_TEMP_PATH = os.getenv("QR_TEMP_PATH", "/home/oemspot/App/qr_ficha.png")
 
 # Configuracion especifica para contacto seco
-POLL_INTERVAL = 3  # Consultar cada 3 segundos
-PULSO_FICHA_DURACION = 1.0  # Duracion del pulso para simular ficha (1 segundo)
-PRECIO_DEFAULT = 1.0  # Precio por ficha por defecto
+POLL_INTERVAL = float(os.getenv("POLL_INTERVAL", "3"))
+PULSO_FICHA_DURACION = float(os.getenv("PULSO_FICHA_DURACION", "1.0"))
+PRECIO_DEFAULT = float(os.getenv("PRECIO_DEFAULT", "1.0"))
 
 # Crear directorio si no existe
 os.makedirs(APP_PATH, exist_ok=True)

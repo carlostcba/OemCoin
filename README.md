@@ -29,7 +29,13 @@ sudo apt install python3 python3-pip python3-gpiozero python3-rpi.gpio \
 sudo pip3 install mercadopago qrcode pillow
 ```
 
-## 3. Usar `control_fichas.sh`
+## 3. Configurar servicio
+
+```bash
+bash/home/oemspot/App/control_fichas.sh install-service
+```
+
+## 4. Usar `control_fichas.sh`
 
 Todas las operaciones diarias se realizan a través del script de control. Ejecútalo como `oemspot` desde el directorio `App`:
 

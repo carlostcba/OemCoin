@@ -25,6 +25,11 @@ def generar_preferencia(precio):
             "expires": True,
             "expiration_date_from": datetime.now().isoformat(),
             "expiration_date_to": datetime.fromtimestamp(time.time() + 1800).isoformat(),
+            "back_urls": {
+                "success": "https://www.mercadopago.com.ar/",
+                "failure": "https://www.mercadopago.com.ar/",
+                "pending": "https://www.mercadopago.com.ar/"
+            },
             "auto_return": "approved"
         }
 

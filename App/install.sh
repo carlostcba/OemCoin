@@ -174,7 +174,7 @@ RELAY_AUXILIAR=27
 
 # Configuración del sistema
 PULSO_FICHA_DURACION=1.0
-PRECIO_DEFAULT=50.0
+PRECIO_DEFAULT=1.0
 LAVADERO_ID=LAV-001
 POLL_INTERVAL=3
 EOF
@@ -242,7 +242,7 @@ create_default_files() {
     
     # Crear archivo de precio
     if [ ! -f "$APP_PATH/precio_ficha.txt" ]; then
-        echo "50.0" > "$APP_PATH/precio_ficha.txt"
+        echo "1.0" > "$APP_PATH/precio_ficha.txt"
         chown "$USER:$USER" "$APP_PATH/precio_ficha.txt"
         print_success "Archivo precio_ficha.txt creado"
     fi

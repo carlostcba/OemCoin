@@ -100,6 +100,12 @@ python3 main.py
 
 ## 🎛️ Control del Sistema
 
+## 3. Configurar servicio
+
+```bash
+bash ./control_fichas.sh install-service
+```
+
 ### Usar el Script de Control Existente
 ```bash
 # Iniciar el simulador

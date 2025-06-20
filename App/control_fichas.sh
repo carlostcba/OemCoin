@@ -61,7 +61,7 @@ check_installation() {
     
     if [ ! -f "$PRECIO_FILE" ]; then
         print_warning "Archivo de precio no encontrado, creando..."
-        echo "50.0" > "$PRECIO_FILE"
+        echo "1.0" > "$PRECIO_FILE"
         print_success "Archivo de precio creado con valor por defecto: \$50"
     fi
 }
@@ -226,7 +226,7 @@ manage_price() {
     else
         # Validar que es un numero
         if ! [[ "$nuevo_precio" =~ ^[0-9]+\.?[0-9]*$ ]]; then
-            print_error "El precio debe ser un numero valido (ej: 50.0 o 75)"
+            print_error "El precio debe ser un numero valido (ej: 1.0 o 75)"
             return 1
         fi
         

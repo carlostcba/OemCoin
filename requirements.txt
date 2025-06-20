@@ -1,0 +1,23 @@
+# Dependencias del Simulador de Fichas Virtuales V2.1
+
+# SDK de MercadoPago
+mercadopago>=2.2.0
+
+# Control de GPIO en Raspberry Pi
+gpiozero>=1.6.2
+RPi.GPIO>=0.7.1
+
+# Generación de códigos QR
+qrcode[pil]>=7.3.1
+
+# Manejo de imágenes
+Pillow>=9.0.0
+
+# Variables de entorno
+python-dotenv>=0.19.0
+
+# Interfaz gráfica (incluida en Python)
+# tkinter (incluido en la instalación estándar de Python)
+
+# Utilidades estándar (incluidas en Python)
+# json, os, time, threading, logging, datetime
